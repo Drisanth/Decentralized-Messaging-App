@@ -11,8 +11,11 @@
   "description": "",
   "type": "module",
   "dependencies": {
+    "cors": "^2.8.5",
     "ethers": "^5.7.2",
-    "express": "^4.17.3",
-    "ipfs-core": "^0.15.4"
+    "express": "^4.21.2",
+    "http": "^0.0.1-security",
+    "ipfs-core": "^0.15.4",
+    "socket.io": "^4.8.1"
   }
 }

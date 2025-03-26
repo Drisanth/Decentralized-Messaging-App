@@ -38,8 +38,8 @@
       ]
     },
     "E:\\Project files\\p2p-messaging-app\\blockchain\\contracts\\GroupChat.sol": {
-      "lastModificationDate": 1742012220879,
-      "contentHash": "3f7b499a85b9337e79bcfd3ce33a668a",
+      "lastModificationDate": 1742133876332,
+      "contentHash": "13532587617ff227be3474e922f84ad9",
       "sourceName": "contracts/GroupChat.sol",
       "solcConfig": {
         "version": "0.8.28",

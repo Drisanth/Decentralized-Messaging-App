@@ -12,6 +12,12 @@
     animation: App-logo-spin infinite 20s linear;
   }
 }
+.chat-box {
+  height: 300px;
+  overflow-y: scroll;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+}
 
 .App-header {
   background-color: #282c34;

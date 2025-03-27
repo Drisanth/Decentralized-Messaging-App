@@ -4,7 +4,8 @@ import io from "socket.io-client";
 const socket = io("http://localhost:5000");
 
 const DirectChat = () => {
-    const [username, setUsername] = useState("");
+    const [username, setUsername] = useState(""); // Actual username (set after "Join")
+    const [usernameInput, setUsernameInput] = useState(""); // Temporary input state
     const [userList, setUserList] = useState({});
     const [selectedUser, setSelectedUser] = useState(null);
     const [message, setMessage] = useState("");
@@ -26,8 +27,9 @@ const DirectChat = () => {
     }, []);
 
     const handleLogin = () => {
-        if (username) {
-            socket.emit("set_username", username);
+        if (usernameInput.trim()) {
+            setUsername(usernameInput); // Set actual username after clicking "Join"
+            socket.emit("set_username", usernameInput);
         }
     };
 
@@ -51,7 +53,15 @@ const DirectChat = () => {
                 <h3>Active Users</h3>
                 <ul style={{ listStyle: "none", padding: 0 }}>
                     {Object.entries(userList).map(([id, name]) => (
-                        <li key={id} onClick={() => handleUserClick(id)} style={{ cursor: "pointer", padding: "10px", background: selectedUser === id ? "#1ABC9C" : "transparent" }}>
+                        <li 
+                            key={id} 
+                            onClick={() => handleUserClick(id)} 
+                            style={{ 
+                                cursor: "pointer", 
+                                padding: "10px", 
+                                background: selectedUser === id ? "#1ABC9C" : "transparent" 
+                            }}
+                        >
                             {name}
                         </li>
                     ))}
@@ -63,7 +73,11 @@ const DirectChat = () => {
                 {!username ? (
                     <div>
                         <h2>Enter Username:</h2>
-                        <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} />
+                        <input 
+                            type="text" 
+                            value={usernameInput} 
+                            onChange={(e) => setUsernameInput(e.target.value)} 
+                        />
                         <button onClick={handleLogin}>Join</button>
                     </div>
                 ) : (
@@ -76,7 +90,12 @@ const DirectChat = () => {
                                         <p key={index}><strong>{msg.sender}:</strong> {msg.text}</p>
                                     ))}
                                 </div>
-                                <input type="text" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Type your message..." />
+                                <input 
+                                    type="text" 
+                                    value={message} 
+                                    onChange={(e) => setMessage(e.target.value)} 
+                                    placeholder="Type your message..." 
+                                />
                                 <button onClick={sendMessage}>Send</button>
                             </>
                         ) : (

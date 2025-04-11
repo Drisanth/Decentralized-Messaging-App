@@ -1,62 +1,56 @@
-import express from "express";
-import http from "http";
-import { Server } from "socket.io";
-import cors from "cors";
-
+const express = require('express');
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
-    }
+const Web3 = require('web3');
+const contractJSON = require('./build/contracts/ChatContract.sol/ChatContract.json');
+const contractABI = contractJSON.abi;
+const contractAddress = 'YOUR_DEPLOYED_CONTRACT_ADDRESS'; // Replace with actual deployed address
+
+// Connect to local Ethereum node (Hardhat)
+const web3 = new Web3('http://localhost:8545'); // or http://127.0.0.1:7545
+
+// Initialize contract
+const contract = new web3.eth.Contract(contractABI, contractAddress);
+
+app.use(express.json());
+
+// POST: Send a message
+app.post('/send-message', async (req, res) => {
+  const { groupId, content, expiry } = req.body;
+
+  try {
+    const accounts = await web3.eth.getAccounts();
+
+    await contract.methods
+      .sendMessage(web3.utils.keccak256(groupId), content, expiry)
+      .send({ from: accounts[0] }); // or use req.body.sender
+
+    res.send({ status: 'Message sent successfully' });
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
 });
 
-app.use(cors());
+// GET: Retrieve messages for a group
+app.get('/get-messages/:groupId', async (req, res) => {
+  const { groupId } = req.params;
 
-const users = {}; // Stores username and socket ID
+  try {
+    const messages = await contract.methods
+      .getMessages(web3.utils.keccak256(groupId))
+      .call();
 
-io.on("connection", (socket) => {
-    console.log("User connected:", socket.id);
-
-    // Store username when a user joins
-    socket.on("set_username", (username) => {
-        users[socket.id] = username;
-        console.log(`User ${username} connected with ID: ${socket.id}`);
-        io.emit("update_users", users); // Update user list
-    });
-
-    // Direct Messaging (Fixed)
-    socket.on("send_message", ({ receiverId, text }) => {
-        const senderName = users[socket.id];
-
-        if (receiverId && users[receiverId]) {
-            io.to(receiverId).emit("receive_message", {
-                text,
-                sender: senderName
-            });
-            console.log(`Direct Message from ${senderName} to ${users[receiverId]}: ${text}`);
-        } else {
-            socket.emit("error_message", "User not available");
-            console.log("Error: Receiver not found!");
-        }
-    });
-
-    // Group Chat (Fixed - Prevents Duplicate Messages)
-    socket.on("send_group_message", ({ text }) => {
-        const senderName = users[socket.id];
-        socket.broadcast.emit("receive_group_message", { text, sender: senderName }); // Only broadcast, no self-send
-        console.log(`Group Message from ${senderName}: ${text}`);
-    });
-
-    // Handle User Disconnection
-    socket.on("disconnect", () => {
-        console.log(`User ${users[socket.id]} disconnected`);
-        delete users[socket.id]; // Remove user from list
-        io.emit("update_users", users);
-    });
+    res.send(messages);
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
 });
 
-server.listen(5000, () => {
-    console.log("Server running on http://localhost:5000");
+// Optional: Fetch all accounts (for frontend testing)
+app.get('/accounts', async (req, res) => {
+  const accounts = await web3.eth.getAccounts();
+  res.send(accounts);
+});
+
+app.listen(3000, () => {
+  console.log('🌐 Server running on http://localhost:3000');
 });

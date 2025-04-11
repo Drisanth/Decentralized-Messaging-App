@@ -91,7 +91,11 @@ const DirectChat = () => {
                                     ))}
                                 </div>
                                 <input 
+<<<<<<< HEAD
                                     type="text" 
+=======
+                                    type="text"
+>>>>>>> 8799ede (Fixed Input field disappearing in DirectChat)
                                     value={message} 
                                     onChange={(e) => setMessage(e.target.value)} 
                                     placeholder="Type your message..." 

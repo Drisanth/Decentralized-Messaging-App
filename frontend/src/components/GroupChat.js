@@ -1,39 +1,65 @@
-import React, { useState, useEffect } from "react";
-import { io } from "socket.io-client";
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { generateGroupId } from '../utility/groupUtils';
 
-const socket = io("http://localhost:5000");
-
-const GroupChat = () => {
-  const [message, setMessage] = useState("");
+const GroupChat = ({ selectedGroupName }) => {
+  const [messageText, setMessageText] = useState('');
   const [messages, setMessages] = useState([]);
 
+  const groupId = generateGroupId(selectedGroupName);
+
   useEffect(() => {
-    socket.on("receive_group_message", (data) => {
-      setMessages((prev) => [...prev, data]);
-    });
+    const fetchMessages = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3000/get-messages/${groupId}`);
+        setMessages(response.data);
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+      }
+    };
 
-    return () => socket.off("receive_group_message");
-  }, []);
+    if (selectedGroupName) {
+      fetchMessages();
+    }
+  }, [selectedGroupName]);
 
-  const sendMessage = () => {
-    if (message.trim()) {
-      const data = { text: message, sender: "You" };
-      socket.emit("send_group_message", data);
-      setMessages((prev) => [...prev, data]);
-      setMessage("");
+  const handleSendMessage = async () => {
+    if (!messageText) return;
+
+    const payload = {
+      groupId,
+      content: messageText,
+      expiry: Math.floor(Date.now() / 1000) + 3600 // expire after 1 hour
+    };
+
+    try {
+      await axios.post('http://localhost:3000/send-message', payload);
+      setMessageText('');
+    } catch (error) {
+      console.error('Error sending message:', error);
     }
   };
 
   return (
-    <div className="container mt-4">
-      <h2>Group Chat</h2>
-      <div className="border p-3 mb-3" style={{ height: "300px", overflowY: "scroll" }}>
-        {messages.map((msg, index) => (
-          <div key={index} className="alert alert-secondary">{msg.sender}: {msg.text}</div>
+    <div className="group-chat-container">
+      <h2>Group Chat: {selectedGroupName}</h2>
+      <p style={{ fontSize: '0.8em' }}>Group ID: {groupId}</p>
+
+      <div className="messages">
+        {messages.map((msg, idx) => (
+          <div key={idx} className="message">
+            <p><strong>{msg.sender}</strong>: {msg.content}</p>
+          </div>
         ))}
       </div>
-      <input type="text" className="form-control" value={message} onChange={(e) => setMessage(e.target.value)} />
-      <button className="btn btn-primary mt-2" onClick={sendMessage}>Send</button>
+
+      <input
+        type="text"
+        value={messageText}
+        onChange={(e) => setMessageText(e.target.value)}
+        placeholder="Type a message"
+      />
+      <button onClick={handleSendMessage}>Send</button>
     </div>
   );
 };
